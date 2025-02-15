@@ -1,0 +1,34 @@
+name: Build kernel
+
+on:
+  push:
+    branches:
+      - oneplus/sm8550
+  workflow_dispatch:
+
+jobs:
+  Kbuild:
+    name: Build kernel
+    runs-on: self-hosted
+    steps:
+      - name: Initialise repo of kernel manifest
+        run: |
+          repo init -u https://github.com/inferno0230/kernel_manifest -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
+
+      - name: Sync
+        run: |
+          repo sync --force-sync -j$(nproc --all) -c
+
+      - name: Build kernel
+        run: |
+          printf 'thin\n\n\n' | ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
+
+      - name: Package build artifacts
+        run: |
+          zip -r kernel.zip device/qcom/kalama-kernel
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: kernel.zip
